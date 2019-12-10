@@ -1,6 +1,9 @@
 #include<iostream>
 #include"log.h"
 #include<memory>
+#include"util.h"
+
+
 
 namespace sylar
 {
@@ -25,9 +28,37 @@ const char* LogLevel::ToString(LogLevel::Level level)
     return "UNKNOW";
 }
 
-Logger::Logger(const std::string& name): m_name(name)
-{
+LogEventWrap::LogEventWrap(LogEvent::ptr e)
+    :m_event(e) {
+}
 
+LogEventWrap::~LogEventWrap() {
+        m_event->getLogger()->log(m_event->getLevel(), m_event);
+}
+
+std::stringstream& LogEventWrap::getSS() {
+        return m_event->getSS();
+}
+
+LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level
+            ,const char* file, int32_t line, uint32_t elapse
+            ,uint32_t thread_id, uint32_t fiber_id, uint64_t time
+            ,const std::string& thread_name)
+             :m_file(file)
+             ,m_line(line)
+             ,m_elapse(elapse)
+             ,m_threadId(thread_id)
+             ,m_fiberId(fiber_id)
+             ,m_time(time)
+             ,m_threadName(thread_name)
+             ,m_logger(logger)
+             ,m_level(level)
+{
+}
+
+Logger::Logger(const std::string& name): m_name(name), m_level(LogLevel::DEBUG)
+{
+    m_formatter.reset(new LogFormatter("%d [%p] <%f: %l>\t %m %n"));
 }
 void Logger::log(LogLevel::Level le, LogEvent::ptr event)
 {
@@ -62,6 +93,10 @@ void Logger::fatal(LogEvent::ptr event)
 }
 void Logger::addAppender(LogAppender::ptr appender)
 {
+    if (!appender->getFormatter())
+    {
+        appender->setFormatter(m_formatter);
+    }
     m_appenders.push_back(appender);
 
 }

@@ -6,6 +6,7 @@ set(CMAKE_CXX_FLAGS "$ENV{CXXFLAGS} -rdynamic -O3 -fPIC -ggdb -std=c++11 -Wall -
 
 set(LIB_SRC
     server/log.cc
+    server/util.cc
     tests/test.cc    
     )
 

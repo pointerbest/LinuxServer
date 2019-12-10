@@ -11,6 +11,22 @@
 #include<map>
 #include<iostream>
 
+#define SYLAR_LOG_LEVEL(logger, level) \
+        if(logger->getLevel() <= level) \
+        sylar::LogEventWrap(sylar::LogEvent::ptr(new sylar::LogEvent(logger, level, \
+        __FILE__, __LINE__, 0, sylar::GetThreadId(),\
+        sylar::GetFiberId(), time(0), std::string("123")))).getSS()
+
+#define SYLAR_LOG_DEBUG(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::DEBUG)
+
+#define SYLAR_LOG_INFO(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::INFO)
+
+#define SYLAR_LOG_WARN(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::WARN)
+
+#define SYLAR_LOG_ERROR(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::ERROR)
+
+#define SYLAR_LOG_FATAL(logger) SYLAR_LOG_LEVEL(logger, sylar::LogLevel::FATAL)
+
 namespace sylar
 {
 
@@ -34,7 +50,11 @@ class LogEvent
 {
 public:
     typedef std::shared_ptr<LogEvent> ptr;
-    LogEvent();
+    LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level
+            ,const char* file, int32_t line, uint32_t elapse
+            ,uint32_t thread_id, uint32_t fiber_id, uint64_t time
+            ,const std::string& thread_name);
+
      /**
      * @brief 返回文件名
      */
@@ -92,20 +112,32 @@ public:
 
    
 private:
-    const char* m_file = nullptr;
-    int32_t m_line = 0;
-    uint32_t m_elapse = 0;//程序启动到现在的毫米数
-    uint32_t m_fiberId = 0;
-    uint32_t m_threadId = 0;
+    const char* m_file;
+    int32_t m_line;
+    uint32_t m_elapse;//程序启动到现在的毫米数
+    uint32_t m_threadId;
+    uint32_t m_fiberId;
     uint64_t m_time;
     std::string m_threadName;
     std::shared_ptr<Logger> m_logger;
-    std::stringstream m_ss;
     LogLevel::Level m_level;
-    std::string m_content;
+    std::stringstream m_ss;
+    //std::string m_content;
 
 };
 
+/**
+ *  * @brief 日志事件包装器
+ *   */
+class LogEventWrap {
+public:
+    LogEventWrap(LogEvent::ptr e);
+    ~LogEventWrap();
+    LogEvent::ptr getEvent() const { return m_event;}
+    std::stringstream& getSS(); 
+private:
+    LogEvent::ptr m_event;
+};
 
 
 class LogFormatter
@@ -189,6 +221,8 @@ private:
     std::string m_name;
     LogLevel::Level m_level;
     std::list<LogAppender::ptr> m_appenders;
+    LogFormatter::ptr m_formatter;
+    Logger::ptr m_root;
 };  
 
 	
