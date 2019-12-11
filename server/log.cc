@@ -56,6 +56,23 @@ LogEvent::LogEvent(std::shared_ptr<Logger> logger, LogLevel::Level level
 {
 }
 
+void LogEvent::format(const char* fmt, ...) {
+    va_list al;
+    va_start(al, fmt);
+    format(fmt, al);
+    va_end(al);
+}
+
+void LogEvent::format(const char* fmt, va_list al) {
+    char* buf = nullptr;
+    int len = vasprintf(&buf, fmt, al);
+    if (len != -1) {
+        m_ss << std::string(buf, len);
+        free(buf);
+    }
+}
+
+
 Logger::Logger(const std::string& name): m_name(name), m_level(LogLevel::DEBUG)
 {
     m_formatter.reset(new LogFormatter("%d [%p] <%f: %l>\t %m %n"));
@@ -117,6 +134,7 @@ void Logger::delAppender(LogAppender::ptr appender)
 FileLogAppender::FileLogAppender(const std::string& filename)
 {
     m_filename = filename;
+    reopen();
 }
 void FileLogAppender::Log(std::shared_ptr<Logger> logger, LogLevel::Level level,  
             LogEvent::ptr event)
@@ -394,6 +412,27 @@ void LogFormatter::init() {
         //std::cout << "(" << std::get<0>(i) << ") - (" << std::get<1>(i) << ") - (" << std::get<2>(i) << ")" << std::endl;
     }
     //std::cout << m_items.size() << std::endl;
+}
+
+LoggerManager::LoggerManager() {
+    m_root.reset(new Logger);
+    m_root->addAppender(LogAppender::ptr(new StdoutLogAppender));
+    m_loggers[m_root->m_name] = m_root;
+    init();
+}
+
+Logger::ptr LoggerManager::getLogger(const std::string& name) {
+    auto it = m_loggers.find(name);
+    if (it != m_loggers.end()) {
+        return it->second;
+    }
+    Logger::ptr logger(new Logger(name));
+    logger->m_root = m_root;
+    m_loggers[name] = logger;
+    return logger;
+}
+
+void LoggerManager::init() {
 }
 
 };
