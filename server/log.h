@@ -12,6 +12,7 @@
 #include<iostream>
 #include<stdarg.h>
 #include"singleton.h"
+#include"util.h"
 
 #define SYLAR_LOG_LEVEL(logger, level) \
         if(logger->getLevel() <= level) \
@@ -45,6 +46,7 @@
 
 #define SYLAR_LOG_FMT_FATAL(logger, fmt, ...) SYLAR_LOG_FMT_LEVEL(logger, sylar::LogLevel::FATAL, fmt, __VA_ARGS__)
 
+#define SYLAR_LOG_ROOT() sylar::LoggerMgr::GetInstance()->getRoot()
 
 namespace sylar
 {

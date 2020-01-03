@@ -6,6 +6,7 @@
 #include<map>
 #include<boost/lexical_cast.hpp>
 #include"log.h"
+#include<yaml-cpp/yaml.h>
 
 namespace sylar{
 class ConfigVarBase {
@@ -21,7 +22,6 @@ public:
     std::string &getDescription() { return m_description; }
     virtual std::string toString() = 0;
     virtual bool fromString(const std::string &val) = 0;
-
 protected:
     std::string m_name;
     std::string m_description;
@@ -52,14 +52,18 @@ public:
     bool fromString(const std::string &val) override
     {
         try{
-            m_val = boost::lexical_cast<T>(m_val);
+            m_val = boost::lexical_cast<T>(val);
+            //std::cout << "from string " << this << " " << m_val << std::endl;
         }
         catch (std::exception& e){
             SYLAR_LOG_ERROR(SYLAR_LOG_ROOT()) << "config: fromString error " << e.what();
         }
         return true;
     }
-    T getValue() { return m_val; }
+    T getValue() { 
+//        std::cout << m_val << std::endl;
+        return m_val; 
+    }
 private:
     T m_val;
 };
@@ -99,6 +103,8 @@ public:
         }
         return std::dynamic_pointer_cast<ConfigVar<T>>(it->second);
     }
+    static ConfigVarBase::ptr LookupBase(const std::string &name);
+    static void LoadFromYaml(const YAML::Node& node);
 private:
     static ConfigVarMap s_datas;
 };
